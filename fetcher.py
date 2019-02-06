@@ -75,7 +75,10 @@ def issue_to_task_data(iid, gl_project):
 
     data = {
         'title': issue.title,
-        'properties': {'issues': [str(iid)]}
+        'properties': {
+            'issues': str(iid),
+            'status': issue.state,
+        }
     }
 
     estimate = get_issue_estimate(issue)
