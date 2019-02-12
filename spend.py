@@ -5,7 +5,7 @@ import sys
 import json
 import re
 import os
-from datetime import timedelta, datetime
+from datetime import timedelta
 
 from gitlab import Gitlab
 from gitlab.exceptions import GitlabGetError
@@ -77,9 +77,11 @@ def add_spent_time(issue, td, date):
         print(e)
 
 
-def spend_time_on(issue, task, since):
+def spend_time_on(issue, task, since, until):
     for l in convert_datetimes(task).get('logbook', []):
-        if l['in'] >= since and l['out'] is not None:
+        if l['in'] >= since and\
+           l['out'] is not None and\
+           l['out'] < until:
             add_spent_time(
                 issue=issue,
                 td=l['out'] - l['in'],
@@ -99,8 +101,9 @@ def get_gitlab_issue(iid, gl_project):
 # Main
 
 
-def cli(base_path, group, subgroup, task, since):
+def cli(base_path, group, subgroup, task, since, until):
     since = interpret_date(since)
+    until = interpret_date(until)
 
     gl_project = get_gitlab_project(group, subgroup)
     if not gl_project:
@@ -120,7 +123,7 @@ def cli(base_path, group, subgroup, task, since):
     with open(task_fp, 'r') as f:
         task = json.load(f)
 
-    spend_time_on(issue, task, since)
+    spend_time_on(issue, task, since, until)
 
 
 # ========================================
@@ -128,7 +131,7 @@ def cli(base_path, group, subgroup, task, since):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 6:
+    if len(sys.argv) != 7:
         raise Exception("ERROR: Invalid arguments: %s" % sys.argv)
     sys.argv.pop(0)
 
